@@ -11,11 +11,13 @@ import 'react-native-gesture-handler';
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import {Button, Text, View} from 'react-native';
+import {Button, Text, View, PermissionsAndroid} from 'react-native';
 import SettingScreen from './screens/settingScreen';
 import StartScreen from './screens/startScreen';
 import SessionScreen from './screens/sessionScreen';
 import SessionDetailScreen from './screens/sessionDetailScreen';
+//import RequestAndroidGPSPermission from './helpers/requestAndroidGPSPermission';
+import GPSLocationNow from './helpers/gpsUtils';
 
 const Stack = createStackNavigator();
 
@@ -23,6 +25,7 @@ const HomeScreen = ({navigation}) => {
   return (
     <View>
       <Text>Home Screen</Text>
+      <Button title="Startgps" onPress={GPSLocationNow} />
       <Button title="Start" onPress={() => navigation.navigate('Start')} />
       <Text>Home Screen</Text>
       <Button title="settings" onPress={() => navigation.navigate('Setting')} />

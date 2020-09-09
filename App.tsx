@@ -12,12 +12,19 @@ import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {Button, Text, View, PermissionsAndroid} from 'react-native';
+import {Provider} from 'react-redux';
+import {createStore} from 'redux';
+
 import SettingScreen from './screens/settingScreen';
 import StartScreen from './screens/startScreen';
 import SessionScreen from './screens/sessionScreen';
 import SessionDetailScreen from './screens/sessionDetailScreen';
 //import RequestAndroidGPSPermission from './helpers/requestAndroidGPSPermission';
 import GPSLocationNow from './helpers/gpsUtils';
+
+import rootReducer from './reducers/rootReducer';
+
+const store = createStore(rootReducer);
 
 const Stack = createStackNavigator();
 
@@ -39,20 +46,22 @@ const ProfileScreen = () => {
 };
 const App = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{title: 'Welcome'}}
-        />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Setting" component={SettingScreen} />
-        <Stack.Screen name="Start" component={StartScreen} />
-        <Stack.Screen name="Session" component={SessionScreen} />
-        <Stack.Screen name="SessionDetail" component={SessionDetailScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Provider store={store}>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{title: 'Welcome'}}
+          />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Setting" component={SettingScreen} />
+          <Stack.Screen name="Start" component={StartScreen} />
+          <Stack.Screen name="Session" component={SessionScreen} />
+          <Stack.Screen name="SessionDetail" component={SessionDetailScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </Provider>
   );
 };
 

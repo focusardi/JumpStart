@@ -1,4 +1,6 @@
 import React from 'react';
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
 import {
   Alert,
   Button,
@@ -11,12 +13,15 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
+
 import Geolocation from 'react-native-geolocation-service';
+
+import {updateSpeed, test2} from '../reducers/speedAction';
 
 //import Geolocation from 'react-native-geolocation-service';
 //https://github.com/Agontuk/react-native-geolocation-service
 
-export default class SpeedMeter extends React.Component {
+class SpeedMeter extends React.Component {
   watchId: number | null = null;
   state = {
     forceLocation: true,
@@ -152,7 +157,16 @@ export default class SpeedMeter extends React.Component {
       this.watchId = Geolocation.watchPosition(
         (position) => {
           this.setState({location: position});
-          console.log(position);
+          //console.log(position);
+          //console.log(position.coords.speed);
+          var speedObject = {
+            speed: position.coords.speed,
+            latitude: position.coords.latitude,
+          };
+
+          this.props.updateSpeed(speedObject);
+          //this.props.test2(speedObject);
+          //this.props.test2(speedObject);
         },
         (error) => {
           this.setState({location: error});
@@ -169,6 +183,7 @@ export default class SpeedMeter extends React.Component {
         },
       );
     });
+
   };
 
   removeLocationUpdates = () => {
@@ -212,6 +227,20 @@ export default class SpeedMeter extends React.Component {
     );
   }
 }
+const mapStateToProps = (state) => {
+  const {speed} = state;
+  return {speed};
+};
+const mapDispatchToProps = (dispatch) =>
+  bindActionCreators(
+    {
+      updateSpeed,
+      test2,
+    },
+    dispatch,
+  );
+
+export default connect(mapStateToProps, mapDispatchToProps)(SpeedMeter);
 
 const styles = StyleSheet.create({
   container: {

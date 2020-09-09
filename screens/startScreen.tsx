@@ -1,34 +1,38 @@
 import React from 'react';
 import {Text, View, StyleSheet} from 'react-native';
+import {connect} from 'react-redux';
+
 import SpeedMeter from '../components/speedMeter';
-import TestMeter from '../components/test';
-const CenterSpeedMeter = [
-  {
-    id: 'getCurrentPosition',
-    title: 'Geolocation.getCurrentPosition',
-    description: 'Asynchronously load and observe location',
-    render() {
-      return <SpeedMeter />;
-    },
-  },
-];
+//import TestMeter from '../components/test';
+
+// const CenterSpeedMeter = [
+//   {
+//     id: 'getCurrentPosition',
+//     title: 'Geolocation.getCurrentPosition',
+//     description: 'Asynchronously load and observe location',
+//     render() {
+//       return <SpeedMeter />;
+//     },
+//   },
+// ];
 
 class StartScreen extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      nowSpeed: 0,
-    };
-  }
+  // constructor() {
+  //   super();
+  //   this.state = {
+  //     nowSpeed: 0,
+  //   };
+  // }
 
   render() {
-    const {nowSpeed} = this.state;
+    //const {nowSpeed} = this.state;
     return (
       <View>
         <Text>Start Screen test</Text>
         <SpeedMeter />
 
-        <Text>{this.state.nowSpeed} KM/h</Text>
+        <Text>{this.props.speed.nowSpeed} KM/h</Text>
+        {/* <Text>{this.props.start.nowSpeed} KM/h</Text> */}
       </View>
     );
   }
@@ -45,7 +49,12 @@ class StartScreen extends React.Component {
     );
   };
 }
-export default StartScreen;
+const mapStateToProps = (state) => {
+  const {speed} = state;
+  return {speed};
+};
+
+export default connect(mapStateToProps)(StartScreen);
 
 const styles = StyleSheet.create({
   container: {

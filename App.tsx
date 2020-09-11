@@ -19,6 +19,7 @@ import SettingScreen from './screens/settingScreen';
 import StartScreen from './screens/startScreen';
 import SessionScreen from './screens/sessionScreen';
 import SessionDetailScreen from './screens/sessionDetailScreen';
+import NewStartScreen from './screens/newStartScreen';
 //import RequestAndroidGPSPermission from './helpers/requestAndroidGPSPermission';
 import GPSLocationNow from './helpers/gpsUtils';
 
@@ -38,6 +39,11 @@ const HomeScreen = ({navigation}) => {
       <Button title="settings" onPress={() => navigation.navigate('Setting')} />
       <Text>Home Screen2</Text>
       <Button title="sessions" onPress={() => navigation.navigate('Session')} />
+      <Text>Home Screen2</Text>
+      <Button
+        title="NewStart"
+        onPress={() => navigation.navigate('NewStart')}
+      />
     </View>
   );
 };
@@ -59,6 +65,7 @@ const App = () => {
           <Stack.Screen name="Start" component={StartScreen} />
           <Stack.Screen name="Session" component={SessionScreen} />
           <Stack.Screen name="SessionDetail" component={SessionDetailScreen} />
+          <Stack.Screen name="NewStart" component={NewStartScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>

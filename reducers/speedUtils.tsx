@@ -8,6 +8,6 @@ export const updateRecord = (record, speed, location, time) => {
     location: location,
     time: time,
   };
-  record.push(newRecord);
+  //record.push(newRecord);
   return record;
 };

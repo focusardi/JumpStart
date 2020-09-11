@@ -1,27 +1,24 @@
 import React from 'react';
-import {connect} from 'react-redux';
-import {bindActionCreators} from 'redux';
 import {
   Alert,
   Button,
   Linking,
   PermissionsAndroid,
   Platform,
-  StyleSheet,
-  Switch,
   Text,
   ToastAndroid,
   View,
 } from 'react-native';
-
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
+import haversine from 'haversine';
 import Geolocation from 'react-native-geolocation-service';
-
 import {updateSpeed, test2} from '../reducers/speedAction';
+import BackgroundTimer from 'react-native-background-timer';
 
-//import Geolocation from 'react-native-geolocation-service';
-//https://github.com/Agontuk/react-native-geolocation-service
+const SETTING_DISTANCE = 100; //meter
 
-class SpeedMeter extends React.Component {
+class NewStartScreen extends React.Component {
   watchId: number | null = null;
   state = {
     forceLocation: true,
@@ -32,14 +29,43 @@ class SpeedMeter extends React.Component {
     updatesEnabled: false,
     foregroundService: false,
     location: {},
+    previousLocation: {},
+    coordinate: {},
+    previousCoordinate: {},
+    timestamp: 0,
+    previousTimestamp: 0,
+    gpsSpeed: 0,
+    distance: 0,
+    records: [],
+    // timestamp: 0,
+    // previousTimestamp: 0,
   };
+  recordId: number = 0;
+  record = {
+    id: 0,
+    startCoordinate: {},
+    nowCoordinate: {},
+    distance: 0,
+    logs: [],
+    startTimestamp: 0,
+    finishTimestamp: 0,
+    status: 0, //0 waiting stop, 1 readyToStart, 2 start, 3 finish
+    nowSpeed: 0,
+  };
+  showStatusText = '';
 
   componentDidMount() {
+    this.getLocation();
     this.getLocationUpdates();
+    this.initRecord();
+    BackgroundTimer.runBackgroundTimer(() => {
+      this.checkRecord();
+    }, 100);
   }
 
   componentWillUnmount() {
     this.removeLocationUpdates();
+    BackgroundTimer.stopBackgroundTimer(); //after this call all code on background stop run.
   }
 
   hasLocationPermissionIOS = async () => {
@@ -123,8 +149,14 @@ class SpeedMeter extends React.Component {
     this.setState({loading: true}, () => {
       Geolocation.getCurrentPosition(
         (position) => {
-          this.setState({location: position, loading: false});
+          this.setState({
+            location: position,
+            loading: false,
+            coordinate: position.coords,
+            timestamp: position.timestamp,
+          });
           console.log(position);
+          this.initRecord();
         },
         (error) => {
           this.setState({location: error, loading: false});
@@ -156,18 +188,42 @@ class SpeedMeter extends React.Component {
     this.setState({updatesEnabled: true}, () => {
       this.watchId = Geolocation.watchPosition(
         (position) => {
-          this.setState({location: position});
-          //console.log(position);
-          //console.log(position.coords.speed);
-          var speedObject = {
-            speed: position.coords.speed,
-            latitude: position.coords.latitude,
-            position: position,
-          };
+          this.setState({
+            previousLocation: this.state.location,
+            previousCoordinate: this.state.coordinate,
+            previousTimestamp: this.state.timestamp,
+          });
+          this.setState({
+            location: position,
+            coordinate: position.coords,
+            timestamp: position.timestamp,
+          });
 
-          this.props.updateSpeed(speedObject);
+          console.log(position);
+          //console.log(position.coords.speed);
+          //   var speedObject = {
+          //     speed: position.coords.speed,
+          //     latitude: position.coords.latitude,
+          //     position: position,
+          //   };
+
+          //this.props.updateSpeed(speedObject);
           //this.props.test2(speedObject);
           //this.props.test2(speedObject);
+          let distance = 0;
+          if (this.state.previousLocation && this.state.location) {
+            distance =
+              this.state.distance +
+              haversine(this.state.previousCoordinate, this.state.coordinate, {
+                unit: 'meter',
+              });
+            this.state.distance = distance;
+
+            this.record.distance = haversine(this.record.startCoordinate, this.state.coordinate, {
+                unit: 'meter',
+              });
+          }
+          //console.log(distance);
         },
         (error) => {
           this.setState({location: error});
@@ -184,7 +240,6 @@ class SpeedMeter extends React.Component {
         },
       );
     });
-
   };
 
   removeLocationUpdates = () => {
@@ -194,6 +249,78 @@ class SpeedMeter extends React.Component {
       this.watchId = null;
       this.setState({updatesEnabled: false});
     }
+  };
+
+  initRecord = async () => {
+    //await this.getLocation();
+    console.log(this.state);
+    this.recordId++;
+    this.record.id = this.recordId;
+    this.record.startCoordinate = this.state.coordinate;
+    this.record.startTimestamp = this.state.timestamp;
+    this.record.status = 0;
+  };
+
+  //   record = {
+  //     id: 0,
+  //     startCoordinate: {},
+  //     nowCoordinate: {},
+  //     distance: 0,
+  //     logs: [],
+  //     startTimestamp: 0,
+  //     finishTimestamp: 0,
+  //     status: 0, //0 waiting stop, 1 readyToStart, 2 start, 3 finish
+  //     nowSpeed: 0,
+  //   };
+
+  checkRecord = () => {
+    switch (this.record.status) {
+      case 0:
+        this.showStatusText = 'STOP AND WAIT!';
+
+        if (this.state.gpsSpeed <= 0.005) {
+          this.record.status = 1; //ready to start and set start time
+          this.record.startTimestamp =
+            new Date().getTime() + Math.random() * (8000 - 5000 + 1);
+          this.record.startCoordinate = this.state.coordinate;
+          //this.initRecord();
+        }
+
+        break;
+      case 1:
+        this.showStatusText = 'READY!';
+
+        if (this.state.gpsSpeed > 0.005) {
+          // 偷起跑
+          this.record.status = 3; //finish
+          break;
+        }
+
+        if (new Date().getTime() >= this.record.startTimestamp) {
+          this.record.status = 2;
+        }
+
+        break;
+      case 2:
+        this.showStatusText = 'GO!';
+
+        if (this.record.distance >= SETTING_DISTANCE) {
+          this.record.status = 3;
+        }
+
+        break;
+      case 3:
+        this.showStatusText = 'THIS RECORD FINISHED!';
+
+        //save record then init new record;
+        this.initRecord();
+
+        break;
+      default:
+        console.log('');
+        break;
+    }
+    //console.log('record');
   };
 
   setAccuracy = (value: any) => this.setState({highAccuracy: value});
@@ -206,24 +333,15 @@ class SpeedMeter extends React.Component {
     this.setState({foregroundService: value});
 
   render() {
-    const {
-      forceLocation,
-      highAccuracy,
-      loading,
-      location,
-      showLocationDialog,
-      significantChanges,
-      updatesEnabled,
-      foregroundService,
-    } = this.state;
-
     return (
-      // <View style={styles.container}>
-      //   <View style={styles.result}>
       <View>
-        <View>
-          <Text>{JSON.stringify(location, null, 4)}</Text>
-        </View>
+        <Text>Record:{this.record.id}</Text>
+        <Text>{this.showStatusText}</Text>
+        <Text>{this.record.nowSpeed} KM/h</Text>
+        <Text>{this.record.distance} Meter</Text>
+        <Text>
+          {(new Date().getTime() - this.record.startTimestamp) / 1000} Sec
+        </Text>
       </View>
     );
   }
@@ -240,39 +358,4 @@ const mapDispatchToProps = (dispatch) =>
     },
     dispatch,
   );
-
-export default connect(mapStateToProps, mapDispatchToProps)(SpeedMeter);
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#F5FCFF',
-    paddingHorizontal: 12,
-  },
-  optionContainer: {
-    paddingBottom: 24,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 12,
-  },
-  result: {
-    borderWidth: 1,
-    borderColor: '#666',
-    width: '100%',
-    paddingHorizontal: 16,
-  },
-  buttonContainer: {
-    alignItems: 'center',
-  },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginVertical: 12,
-    width: '100%',
-  },
-});
+export default connect(mapStateToProps, mapDispatchToProps)(NewStartScreen);

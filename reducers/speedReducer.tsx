@@ -6,6 +6,7 @@ interface SpeedReordMap {
 }
 
 const INITIAL_STATE = {
+  nowPosition: null,
   nowSpeed: 0,
   nowRecord: [],
   nowlocation: null,
@@ -16,8 +17,10 @@ const INITIAL_STATE = {
 const speedReducer = (state = INITIAL_STATE, action) => {
   switch (action.type) {
     case SpeedActionTypes.SET_CURRENT_SPEED:
-      console.log('123');
-      console.log(state);
+      //console.log(state);
+      //console.log(action.payload.position);
+      state.nowSpeed = action.payload.speed;
+      state.nowPosition = action.payload.position;
       return {
         ...state,
         nowRecord: updateRecord(
@@ -29,7 +32,7 @@ const speedReducer = (state = INITIAL_STATE, action) => {
       };
       //return state;
     case SpeedActionTypes.TEST:
-      console.log(action.payload);
+      //console.log(action.payload);
       return state;
     default:
       //console.log(state);

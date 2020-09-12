@@ -9,6 +9,7 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import haversine from 'haversine';
@@ -53,6 +54,32 @@ class NewStartScreen extends React.Component {
     nowSpeed: 0,
   };
   showStatusText = '';
+
+  constructor(props) {
+    super(props);
+    const {route, navigation} = props;
+    //const navigation = useNavigation();
+    console.log(navigation);
+    navigation.addListener('beforeRemove', (e) => {
+      // Prevent default behavior of leaving the screen
+      e.preventDefault();
+
+      // Prompt the user before leaving the screen
+      Alert.alert('Leave Now?', 'Finish this session and save data?', [
+        {text: "Don't leave", style: 'cancel', onPress: () => {}},
+        {
+          text: 'SAVE',
+          style: 'destructive',
+          // If the user confirmed, then we dispatch the action we blocked earlier
+          // This will continue the action that had triggered the removal of the screen
+          onPress: () => {
+            //TODO save data
+            navigation.dispatch(e.data.action);
+          },
+        },
+      ]);
+    });
+  }
 
   componentDidMount() {
     this.getLocation();
@@ -219,9 +246,13 @@ class NewStartScreen extends React.Component {
               });
             this.state.distance = distance;
 
-            this.record.distance = haversine(this.record.startCoordinate, this.state.coordinate, {
+            this.record.distance = haversine(
+              this.record.startCoordinate,
+              this.state.coordinate,
+              {
                 unit: 'meter',
-              });
+              },
+            );
           }
           //console.log(distance);
         },

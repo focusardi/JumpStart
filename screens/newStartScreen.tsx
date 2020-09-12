@@ -16,6 +16,7 @@ import haversine from 'haversine';
 import Geolocation from 'react-native-geolocation-service';
 import {updateSpeed, test2} from '../reducers/speedAction';
 import BackgroundTimer from 'react-native-background-timer';
+import {db, ExecuteQuery} from '../helpers/dbUtil';
 
 const SETTING_DISTANCE = 100; //meter
 
@@ -54,12 +55,13 @@ class NewStartScreen extends React.Component {
     nowSpeed: 0,
   };
   showStatusText = '';
+  NEW_SESSION_ID = 0;
 
   constructor(props) {
     super(props);
     const {route, navigation} = props;
     //const navigation = useNavigation();
-    console.log(navigation);
+    //console.log(navigation);
     navigation.addListener('beforeRemove', (e) => {
       // Prevent default behavior of leaving the screen
       e.preventDefault();
@@ -79,6 +81,8 @@ class NewStartScreen extends React.Component {
         },
       ]);
     });
+
+    this.initDBSchema();
   }
 
   componentDidMount() {
@@ -94,6 +98,49 @@ class NewStartScreen extends React.Component {
     this.removeLocationUpdates();
     BackgroundTimer.stopBackgroundTimer(); //after this call all code on background stop run.
   }
+
+  initDBSchema() {
+    console.log('initDBSchema');
+    this.initDBSessionTable();
+    this.createNewSession();
+    this.SelectQuery();
+  }
+
+  initDBSessionTable = async () => {
+    await db.executeSql(
+      ' CREATE TABLE IF NOT EXISTS SESSIONS (SESSION_ID INTEGER PRIMARY KEY NOT NULL, SESSION_START_TIME REAL, BEST_TIME REAL, RECORD_NUMBER INTEGER, TEST_METER INTEGER) ',
+    );
+  };
+  createNewSession = async () => {
+    let selectQuery = await ExecuteQuery(
+      'SELECT MAX(SESSION_ID) AS MAX_SESSION_ID FROM SESSIONS',
+      [],
+    );
+    console.log(selectQuery.rows.item(0).MAX_SESSION_ID);
+    if (selectQuery.rows.item(0).MAX_SESSION_ID) {
+      this.NEW_SESSION_ID = selectQuery.rows.item(0).MAX_SESSION_ID + 1;
+    } else {
+      this.NEW_SESSION_ID = 1;
+    }
+    let aa = ExecuteQuery('INSERT INTO SESSIONS(SESSION_ID, SESSION_START_TIME) values(?, ?)', [
+      this.NEW_SESSION_ID,
+      new Date().getTime(),
+    ]);
+    console.log(aa);
+
+    // var rows = selectQuery.rows;
+    // for (let i = 0; i < rows.length; i++) {
+    //     var item = rows.item(i);
+    //     console.log(item);
+    // }
+    // let aa = this.ExecuteQuery('INSERT INTO SESSIONS(SESSION_ID) values(?)', [1]);
+    // console.log(aa);
+
+    // db.executeSql('SELECT SESSION_ID FROM SESSIONS', [], (tx, result) => {
+    //   console.log(result);
+    // });
+  };
+  async SelectQuery() {}
 
   hasLocationPermissionIOS = async () => {
     const openSetting = () => {

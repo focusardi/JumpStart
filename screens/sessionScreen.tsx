@@ -8,22 +8,7 @@ import {
   StyleSheet,
   StatusBar,
 } from 'react-native';
-
-const DATA = [
-  {
-    id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
-    title: "First Item",
-  },
-  {
-    id: "3ac68afc-c605-48d3-a4f8-fbd91aa97f63",
-    title: "Second Item",
-  },
-  {
-    id: "58694a0f-3da1-471f-bd96-145571e29d72",
-    title: "Third Item",
-  },
-];
-
+import {ExecuteQuery} from '../helpers/dbUtil';
 
 const Item = ({item, onPress, style}) => (
   <TouchableOpacity onPress={onPress} style={[styles.item, style]}>
@@ -32,19 +17,45 @@ const Item = ({item, onPress, style}) => (
 );
 
 class SessionScreen extends React.Component {
-  
+  constructor(props) {
+    super(props);
+    this.getDataList();
+  }
 
+  state = {
+    DATA: [{id: 0, title: '123'}],
+  };
+
+  getDataList = async () => {
+    let selectQuery = await ExecuteQuery(
+      'SELECT SESSION_ID, SESSION_START_TIME FROM SESSIONS',
+      [],
+    );
+    console.log(selectQuery);
+    var rows = selectQuery.rows;
+    this.state.DATA.pop();
+    for (let i = 0; i < rows.length; i++) {
+      var item = rows.item(i);
+      console.log(item);      
+      var data = {
+        id: item.SESSION_ID,
+        title: item.SESSION_START_TIME ? item.SESSION_START_TIME : 'AA',
+      };
+      this.state.DATA.push(data);
+    }
+    console.log(this.state.DATA);
+  };
   //const [selectedId, setSelectedId] = useState(null);
-  
+
   render() {
     const {navigation} = this.props;
     const renderItem = ({item}) => {
       //const backgroundColor = item.id === selectedId ? '#6e3b6e' : '#f9c2ff';
-  
+
       return (
         <Item
           item={item}
-          onPress={() => navigation.navigate('SessionDetail', {item:item})}
+          onPress={() => navigation.navigate('SessionDetail', {item: item})}
           //style={{backgroundColor}}
         />
       );
@@ -53,12 +64,12 @@ class SessionScreen extends React.Component {
     return (
       <View>
         <Text>session Screen</Text>
-        <Button
+        {/* <Button
           title="Go to detail"
           onPress={() => navigation.navigate('SessionDetail')}
-        />
+        /> */}
         <FlatList
-          data={DATA}
+          data={this.state.DATA}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           //extraData={selectedId}

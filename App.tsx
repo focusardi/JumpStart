@@ -20,6 +20,7 @@ import StartScreen from './screens/startScreen';
 import SessionScreen from './screens/sessionScreen';
 import SessionDetailScreen from './screens/sessionDetailScreen';
 import NewStartScreen from './screens/newStartScreen';
+import RecordDetailScreen from './screens/recordDetailScreen';
 //import RequestAndroidGPSPermission from './helpers/requestAndroidGPSPermission';
 import GPSLocationNow from './helpers/gpsUtils';
 
@@ -66,6 +67,7 @@ const App = () => {
           <Stack.Screen name="Session" component={SessionScreen} />
           <Stack.Screen name="SessionDetail" component={SessionDetailScreen} />
           <Stack.Screen name="NewStart" component={NewStartScreen} />
+          <Stack.Screen name="RecordDetail" component={RecordDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
